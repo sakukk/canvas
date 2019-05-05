@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>words</title>
+	<style>
+		html {
+			height: 100%;
+		}
+		body {
+			height: 100%;
+			margin: 0;
+		}
+		canvas {
+			width: 100%;
+			height: 100%;
+			position: absolute;
+		}
+		#canvas {
+			z-index: 1;
+		}
+		#words {
+			z-index: 0;
+		}
+	</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<canvas id="words"></canvas>
+
+<script src="dynamics.min.js"></script>
+<script type="text/javascript">
+	window.requestAnimFrame = (function(){
+		return  window.requestAnimationFrame       ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame    ||
+			function( callback ){
+				window.setTimeout(callback, 1000 / 60);
+			}
+	})();
+
+	var getRandomColor = function() {
+		return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
+	};
+
+	var canvas = document.getElementById("canvas");
+	var ctx = canvas.getContext("2d");
+
+	var wordCanvas = document.getElementById('words');
+	var wordCtx = wordCanvas.getContext('2d');
+
+	wordCanvas.width = wordCanvas.offsetWidth;
+	wordCanvas.height = wordCanvas.offsetHeight;
+
+	var w = canvas.offsetWidth;
+	var h = canvas.offsetHeight;
+
+	canvas.width = w;
+	canvas.height = h;
+
+	var pointList = [];
+
+	function Point (x, y) {
+		this.x = x;
+		this.y = y;
+		this.r = 2;
+		this.sx = Math.random() * 10 * 0.2 * (Math.random() < 0.5 ? 1 : -1);
+		this.sy = Math.random() * 10 * 0.2 * (Math.random() < 0.5 ? 1 : -1);
+		this.color = getRandomColor();
+		this.status = 0;
+		this.targetX = 0;
+		this.targetY = 0;
+	}
+
+	Point.prototype.drawPoint = function () {
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+		ctx.closePath();
+		ctx.fillStyle = this.color;
+		ctx.fill();
+	};
+
+	Point.prototype.move = function () {
+		if (this.status === 1) {
+			return;
+		}
+		this.x += this.sx;
+		this.y += this.sy;
+
+		if (this.x > w) {
+			this.sx = -Math.abs(this.sx);
+		} else if (this.x < 0) {
+			this.sx = Math.abs(this.sx);
+		}
+
+		if (this.y > h) {
+			this.sy = -Math.abs(this.sy);
+		} else if (this.y < 0) {
+			this.sy = Math.abs(this.sy)
+		}
+	};
+
+	Point.prototype.drawLine = function (ctx, other) {
+		var disX = this.x - other.x;
+		var disY = this.y - other.y;
+
+		var distance = Math.sqrt(disX * disX + disY *disY);
+		if (distance < 100) {
+			ctx.beginPath();
+			ctx.moveTo(this.x, this.y);
+			ctx.lineTo(other.x, other.y);
+			ctx.closePath();
+			var gradiant = ctx.createLinearGradient(this.x, this.y, other.x, other.y);
+			gradiant.addColorStop('0', this.color);
+			gradiant.addColorStop('0.5', '#ffffff');
+			gradiant.addColorStop('1.0', other.color);
+			ctx.strokeStyle =gradiant;
+			ctx.stokeWidth = 1;
+			ctx.stroke();
+		}
+	};
+
+	for (let i = 0; i < 500; i++) {
+		pointList.push(new Point(Math.random() * w, Math.random() * h))
+	}
+
+	function paint() {
+		ctx.clearRect(0, 0, w, h);
+		for (var i = 0; i < pointList.length; i++) {
+			pointList[i].drawPoint();
+			pointList[i].move();
+		}
+	}
+
+	function loop () {
+		requestAnimationFrame(loop);
+		paint();
+	}
+
+	window.addEventListener('resize', function() {
+		w = canvas.width = canvas.offsetWidth;
+		h = canvas.height = canvas.offsetHeight;
+	});
+
+	var activeCount = 0;
+	function getText () {
+		var index = 0;
+		wordCtx.textAlign = "center";
+		wordCtx.font = 120 + "px arial";
+		wordCtx.fillStyle = '#ffffff';
+		wordCtx.fillText('hello', w / 2, h / 2);
+		var imgData = wordCtx.getImageData(0, 0, w, h);
+		var buffer32 = new Uint32Array(imgData.data.buffer);
+
+
+		var gridY = 5, gridX = 5;
+		for (var j = 0; j < h; j += gridY) {
+			for (var i = 0; i < w; i += gridX) {
+				if (buffer32[j * w + i]) {
+					pointList[index].targetX = i;
+					pointList[index].targetY = j;
+					pointList[index].status = 1;
+					index ++;
+				}
+			}
+		}
+		activeCount = index;
+
+		for (var m = 0; m < activeCount; m ++) {
+			dynamics.animate(pointList[m], {
+				x: pointList[m].targetX,
+				y: pointList[m].targetY
+			},{
+				type: dynamics.easeIn,
+				duration: 1024,
+			});
+		}
+	}
+
+	loop();
+	getText ();
+</script>
+</body>
+</html>

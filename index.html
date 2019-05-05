@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>canvas</title>
+	<style>
+		html {
+			height: 100%;
+		}
+		body {
+			height: 100%;
+			margin: 0;
+		}
+		canvas {
+			width: 100%;
+			height: 100%;
+			position: absolute;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+	<script type="text/javascript">
+		window.requestAnimFrame = (function(){
+			return  window.requestAnimationFrame       ||
+				window.webkitRequestAnimationFrame ||
+				window.mozRequestAnimationFrame    ||
+				function( callback ){
+					window.setTimeout(callback, 1000 / 60);
+				}
+		})();
+
+		var getRandomColor = function() {
+			return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
+		};
+
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+
+		var w = canvas.offsetWidth;
+		var h = canvas.offsetHeight;
+
+		canvas.width = w;
+		canvas.height = h;
+
+		var pointList = [];
+
+		function Point (x, y) {
+			this.x = x;
+			this.y = y;
+			this.r = 0.2 * Math.random() * 20;
+			this.sx = Math.random() * 10 * 0.2 * (Math.random() < 0.5 ? 1 : -1);
+			this.sy = Math.random() * 10 * 0.2 * (Math.random() < 0.5 ? 1 : -1);
+			this.color = getRandomColor()
+		}
+
+		Point.prototype.drawPoint = function () {
+			ctx.beginPath();
+			ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+			ctx.closePath();
+			ctx.fillStyle = this.color;
+			ctx.fill();
+		};
+
+		Point.prototype.move = function () {
+			this.x += this.sx;
+			this.y += this.sy;
+
+			if (this.x > w) {
+				this.sx = -Math.abs(this.sx);
+			} else if (this.x < 0) {
+				this.sx = Math.abs(this.sx);
+			}
+
+			if (this.y > h) {
+				this.sy = -Math.abs(this.sy);
+			} else if (this.y < 0) {
+				this.sy = Math.abs(this.sy)
+			}
+		};
+
+		Point.prototype.drawLine = function (ctx, other) {
+			var disX = this.x - other.x;
+			var disY = this.y - other.y;
+
+			var distance = Math.sqrt(disX * disX + disY *disY);
+			if (distance < 100) {
+				ctx.beginPath();
+				ctx.moveTo(this.x, this.y);
+				ctx.lineTo(other.x, other.y);
+				ctx.closePath();
+				var gradiant = ctx.createLinearGradient(this.x, this.y, other.x, other.y);
+				gradiant.addColorStop('0', this.color);
+				gradiant.addColorStop('0.5', '#ffffff');
+				gradiant.addColorStop('1.0', other.color);
+				ctx.strokeStyle =gradiant;
+				ctx.stokeWidth = 1;
+				ctx.stroke();
+			}
+		};
+
+		for (let i = 0; i < 20; i++) {
+			pointList.push(new Point(Math.random() * w, Math.random() * h))
+		}
+
+		function paint() {
+			ctx.clearRect(0, 0, w, h);
+			for (var i = 0; i < pointList.length; i++) {
+				pointList[i].drawPoint();
+				pointList[i].move();
+				for (var j = i+1; j< pointList.length; j++) {
+					pointList[i].drawLine(ctx, pointList[j]);
+				}
+			}
+		}
+
+		function loop () {
+			requestAnimationFrame(loop);
+			paint();
+		}
+		loop();
+		window.addEventListener('resize', function() {
+			w = canvas.width = canvas.offsetWidth;
+			h = canvas.height = canvas.offsetHeight;
+		});
+	</script>
+</body>
+</html>
