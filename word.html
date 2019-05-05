@@ -10,6 +10,7 @@
 		body {
 			height: 100%;
 			margin: 0;
+			background: black;
 		}
 		canvas {
 			width: 100%;
@@ -66,7 +67,7 @@
 		this.r = 2;
 		this.sx = Math.random() * 10 * 0.2 * (Math.random() < 0.5 ? 1 : -1);
 		this.sy = Math.random() * 10 * 0.2 * (Math.random() < 0.5 ? 1 : -1);
-		this.color = getRandomColor();
+		this.color = '#ffffff';//getRandomColor();
 		this.status = 0;
 		this.targetX = 0;
 		this.targetY = 0;
@@ -114,7 +115,7 @@
 			ctx.closePath();
 			var gradiant = ctx.createLinearGradient(this.x, this.y, other.x, other.y);
 			gradiant.addColorStop('0', this.color);
-			gradiant.addColorStop('0.5', '#ffffff');
+			gradiant.addColorStop('0.5', '#2aff57');
 			gradiant.addColorStop('1.0', other.color);
 			ctx.strokeStyle =gradiant;
 			ctx.stokeWidth = 1;
@@ -145,47 +146,54 @@
 	});
 
 	var activeCount = 0;
-	function getText () {
+
+	function drawText(text) {
 		var index = 0;
-		wordCtx.textAlign = "center";
-		wordCtx.font = 120 + "px arial";
-		wordCtx.fillStyle = '#ffffff';
-		wordCtx.fillText('hello world', w / 2, h / 2);
-		var imgData = wordCtx.getImageData(0, 0, w, h);
-		var buffer32 = new Uint32Array(imgData.data.buffer);
+		return new Promise((resolve, reject) => {
+			setTimeout(function () {
+				wordCtx.clearRect(0, 0, wordCanvas.width, wordCanvas.height);
+				wordCtx.textAlign = "center";
+				wordCtx.font = 200 + "px arial";
+				wordCtx.fillStyle = '#000000';
+				wordCtx.fillText(text, w / 2, h / 2);
+				var imgData = wordCtx.getImageData(0, 0, w, h);
+				var buffer32 = new Uint32Array(imgData.data.buffer);
 
-
-		var gridY = 5, gridX = 5;
-		for (var j = 0; j < h; j += gridY) {
-			for (var i = 0; i < w; i += gridX) {
-				if (buffer32[j * w + i]) {
-					pointList[index].backX = pointList[index].x;
-					pointList[index].backY = pointList[index].y;
-					pointList[index].targetX = i;
-					pointList[index].targetY = j;
-					pointList[index].status = 1;
-					index ++;
+				var gridY = 8, gridX = 8;
+				for (var j = 0; j < h; j += gridY) {
+					for (var i = 0; i < w; i += gridX) {
+						if (buffer32[j * w + i]) {
+							pointList[index].backX = pointList[index].x;
+							pointList[index].backY = pointList[index].y;
+							pointList[index].targetX = i;
+							pointList[index].targetY = j;
+							pointList[index].status = 1;
+							index++;
+						}
+					}
 				}
-			}
-		}
-		activeCount = index;
+				activeCount = index;
 
-		for (var m = 0; m < activeCount; m ++) {
-			dynamics.animate(pointList[m], {
-				x: pointList[m].targetX,
-				y: pointList[m].targetY
-			},{
-				type: dynamics.easeIn,
-				duration: 1024,
-			});
-		}
+				for (var m = 0; m < activeCount; m++) {
+					dynamics.animate(pointList[m], {
+						x: pointList[m].targetX,
+						y: pointList[m].targetY
+					}, {
+						type: dynamics.easeIn,
+						duration: 1024,
+					});
+				}
 
-		setTimeout(function () {
-			goBackPosition();
-		}, 3000);
+				setTimeout(function () {
+					goBackPosition(function () {
+						resolve();
+					});
+				}, 2000);
+			}, 1500);
+		});
 	}
 
-	function goBackPosition () {
+	function goBackPosition (callback) {
 		for (var m = 0; m < activeCount; m ++) {
 			pointList[m].status = 0;
 			dynamics.animate(pointList[m], {
@@ -194,12 +202,20 @@
 			},{
 				type: dynamics.easeIn,
 				duration: 1024,
+				complete: callback()
 			});
 		}
 	}
 
 	loop();
-	getText ();
+
+	(async function () {
+		let arr = [3, 2, 1, 'hello world'];
+		for (var text of arr) {
+			await drawText(text);
+		}
+	} ());
+
 
 </script>
 </body>
