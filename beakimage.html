@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+	<style>
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+		}
+		canvas {
+			margin: 0;
+			display: block;
+			/*position: relative;*/
+			/*float: left;*/
+		}
+
+		#container {
+			width: 1356px;
+			height: 800px;
+		}
+		.hide-img {
+			display: none;
+		}
+	</style>
+</head>
+<body>
+	<!--<canvas id="canvas"></canvas>-->
+	<div id="container"></div>
+	<img src="image/timg.jpg" id="backimg" width="1356" height="800" class="hide-img"/>
+	<script type="text/javascript">
+		var image = document.getElementById('backimg');
+		var container = document.getElementById('container');
+		// var canvas = document.getElementById('canvas');
+		// var ctx = canvas.getContext('2d');
+		//
+		// var w = 1356;
+		// var h = 800;
+		// canvas.width = w;
+		// canvas.height = h;
+
+		var slicesArray = [];
+
+		image.onload = function () {
+			var imageWidth = image.width;
+			var imageHeight = image.height;
+			var splitX = imageWidth / 10;
+			var splitY = imageHeight / 10;
+
+
+			for (var n = 0; n < imageHeight; n += splitY) {
+				for (var m = 0; m < imageWidth - splitX; m += splitX) {
+					var slice = new Slice(image, m, n, splitX, splitY);
+					slicesArray.push(slice);
+					console.log(slice);
+					container.appendChild(slice.canvas);
+				}
+			}
+			// ctx.drawImage(image, 0, 0);
+		};
+
+		function Slice (img, x, y, splitX, splitY) {
+			this.x = x;
+			this.y = y;
+			this.splitX = splitX;
+			this.splitY = splitY;
+			this.canvas = document.createElement('canvas');
+			this.canvas.width = this.splitX;
+			this.canvas.height = this.splitY;
+			this.canvas.style.width = this.splitX + 'px';
+			this.canvas.style.height = this.splitY + 'px';
+			this.canvas.style.position = 'absolute';
+			this.canvas.style.top = this.y + 'px';
+			this.canvas.style.left = this.x + 'px';
+			this.ctx = this.canvas.getContext('2d');
+
+			this.ctx.translate(-this.x, -this.y);
+			this.ctx.beginPath();
+			this.ctx.rect(this.x, this.y, this.splitX, this.splitY);
+			this.ctx.fillStyle = '#5561ff';
+			this.ctx.fill();
+			this.ctx.closePath();
+
+			// this.ctx.textAlign = "center";
+			// this.ctx.font = 20 + "px arial";
+			// this.ctx.fillStyle = '#000000';
+			// this.ctx.fillText(`${Math.round(x)}, ${Math.round(y)}`, x + splitX / 2, y + splitY / 2);
+
+			// console.log(img, this.x, this.y, this.splitX, this.splitY);
+			this.ctx.drawImage(img, x, y, splitX, splitY, x, y, splitX, splitY);
+		}
+	</script>
+</body>
+</html>
