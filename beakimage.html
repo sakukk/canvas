@@ -29,6 +29,7 @@
 	<!--<canvas id="canvas"></canvas>-->
 	<div id="container"></div>
 	<img src="image/timg.jpg" id="backimg" width="1356" height="800" class="hide-img"/>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
 	<script type="text/javascript">
 		var image = document.getElementById('backimg');
 		var container = document.getElementById('container');
@@ -48,13 +49,22 @@
 			var splitX = imageWidth / 10;
 			var splitY = imageHeight / 10;
 
-
+			var index = 0;
 			for (var n = 0; n < imageHeight; n += splitY) {
 				for (var m = 0; m < imageWidth - splitX; m += splitX) {
 					var slice = new Slice(image, m, n, splitX, splitY);
 					slicesArray.push(slice);
-					console.log(slice);
+					console.log(m, n);
+					TweenMax.fromTo(slice.canvas, 1, {
+						x: 0,
+						y: n
+					},{
+						x: m,
+						y: n,
+						delay: index / 500 * 3
+					});
 					container.appendChild(slice.canvas);
+					index ++;
 				}
 			}
 			// ctx.drawImage(image, 0, 0);
@@ -71,8 +81,8 @@
 			this.canvas.style.width = this.splitX + 'px';
 			this.canvas.style.height = this.splitY + 'px';
 			this.canvas.style.position = 'absolute';
-			this.canvas.style.top = this.y + 'px';
-			this.canvas.style.left = this.x + 'px';
+			// this.canvas.style.top = this.y + 'px';
+			// this.canvas.style.left = this.x + 'px';
 			this.ctx = this.canvas.getContext('2d');
 
 			this.ctx.translate(-this.x, -this.y);
@@ -80,6 +90,7 @@
 			this.ctx.rect(this.x, this.y, this.splitX, this.splitY);
 			this.ctx.fillStyle = '#5561ff';
 			this.ctx.fill();
+			this.ctx.clip();
 			this.ctx.closePath();
 
 			// this.ctx.textAlign = "center";
